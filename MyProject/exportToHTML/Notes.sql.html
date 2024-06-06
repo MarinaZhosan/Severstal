@@ -1,0 +1,139 @@
+<html>
+<head>
+<title>Notes.sql</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #8c8c8c; font-style: italic;}
+.s1 { color: #080808;}
+.s2 { color: #0033b3;}
+.s3 { color: #067d17;}
+.s4 { color: #1750eb;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Notes.sql</font>
+</center></td></tr></table>
+<pre><span class="s0">--Создаем таблицу--</span>
+<span class="s2">IF </span><span class="s1">OBJECT_ID(</span><span class="s3">'Notes'</span><span class="s1">, </span><span class="s3">'U'</span><span class="s1">) </span><span class="s2">IS NULL</span>
+    <span class="s2">BEGIN</span>
+        <span class="s2">CREATE TABLE </span><span class="s1">Notes (NoteID </span><span class="s2">INT IDENTITY</span><span class="s1">(</span><span class="s4">1</span><span class="s1">,</span><span class="s4">1</span><span class="s1">) </span><span class="s2">PRIMARY KEY</span><span class="s1">,</span>
+                            <span class="s1">NoteTitle </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s4">50</span><span class="s1">),</span>
+                            <span class="s1">NoteText </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s2">MAX</span><span class="s1">),</span>
+                            <span class="s1">CreatingDate </span><span class="s2">DATETIME DEFAULT </span><span class="s1">GETDATE());</span>
+
+<span class="s0">--Создаю первую заметку по умолчанию--</span>
+        <span class="s2">DECLARE </span><span class="s1">@DefaultNoteText </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s2">MAX</span><span class="s1">) = </span><span class="s3">'Это приложение заметки где вы можете создавать, хранить, изменять и удалять свои заметки используя команды'</span>
+        <span class="s2">DECLARE </span><span class="s1">@DefaultNoteTitle </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s2">MAX</span><span class="s1">) = </span><span class="s3">'О заметках'</span>
+        <span class="s2">INSERT INTO </span><span class="s1">Notes (NoteTitle, NoteText)</span>
+        <span class="s2">VALUES </span><span class="s1">(@DefaultNoteTitle, @DefaultNoteText);</span>
+
+    <span class="s2">PRINT </span><span class="s1">@DefaultNoteTitle + @DefaultNoteText + </span><span class="s2">CHAR</span><span class="s1">(</span><span class="s4">10</span><span class="s1">) + </span><span class="s3">'Чтобы посмотреть все команды приложения введите EXEC Info'</span><span class="s1">;</span>
+<span class="s2">END</span>
+<span class="s2">ELSE</span>
+<span class="s2">BEGIN</span>
+    <span class="s2">PRINT </span><span class="s3">'Таблица с заметками уже существует'</span><span class="s1">;</span>
+    <span class="s2">END</span><span class="s1">;</span>
+<span class="s2">GO</span>
+<span class="s0">--Создаю процедуру для создания заметок--</span>
+<span class="s2">IF </span><span class="s1">OBJECT_ID(</span><span class="s3">'AddNote'</span><span class="s1">, </span><span class="s3">'P'</span><span class="s1">) </span><span class="s2">IS NOT NULL</span>
+    <span class="s2">DROP PROCEDURE  </span><span class="s1">AddNote;</span>
+<span class="s2">GO</span>
+<span class="s2">CREATE PROCEDURE </span><span class="s1">AddNote</span>
+    <span class="s1">@NoteTitle </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s4">50</span><span class="s1">),</span>
+    <span class="s1">@NoteText </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s2">MAX</span><span class="s1">)</span>
+<span class="s2">AS</span>
+<span class="s2">BEGIN</span>
+
+    <span class="s2">INSERT INTO </span><span class="s1">Notes (NoteTitle, NoteText)</span>
+    <span class="s2">VALUES </span><span class="s1">(@NoteTitle, @NoteText);</span>
+    <span class="s2">PRINT </span><span class="s3">'Заметка успешно сохранена'</span><span class="s1">;</span>
+
+<span class="s2">END</span><span class="s1">;</span>
+<span class="s2">GO</span>
+
+<span class="s0">--Создаю процедуру для вывода списка заметок--</span>
+<span class="s2">IF </span><span class="s1">OBJECT_ID(</span><span class="s3">'GetNotes'</span><span class="s1">, </span><span class="s3">'P'</span><span class="s1">) </span><span class="s2">IS NOT NULL</span>
+    <span class="s2">DROP PROCEDURE </span><span class="s1">GetNotes;</span>
+<span class="s2">GO</span>
+<span class="s2">CREATE PROCEDURE </span><span class="s1">GetNotes</span>
+<span class="s2">AS</span>
+<span class="s2">BEGIN</span>
+    <span class="s2">SELECT </span><span class="s1">NoteID, NoteTitle, NoteText, CreatingDate </span><span class="s2">FROM </span><span class="s1">Notes;</span>
+<span class="s2">END</span><span class="s1">;</span>
+<span class="s2">GO</span>
+
+<span class="s0">--Создаю прцедуру для редактирования заметки(обновление)--</span>
+<span class="s2">IF </span><span class="s1">OBJECT_ID(</span><span class="s3">'EditNote'</span><span class="s1">, </span><span class="s3">'P'</span><span class="s1">) </span><span class="s2">IS NOT NULL</span>
+    <span class="s2">DROP PROCEDURE </span><span class="s1">EditNote;</span>
+<span class="s2">GO</span>
+<span class="s2">CREATE PROCEDURE </span><span class="s1">EditNote</span>
+    <span class="s1">@NoteID </span><span class="s2">INT</span><span class="s1">,</span>
+    <span class="s1">@NoteTitle </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s4">50</span><span class="s1">),</span>
+    <span class="s1">@NoteText </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s2">MAX</span><span class="s1">)</span>
+<span class="s2">AS</span>
+<span class="s2">BEGIN</span>
+    <span class="s2">UPDATE </span><span class="s1">Notes </span><span class="s2">SET </span><span class="s1">NoteTitle = @NoteTitle, NoteText = @NoteText</span>
+                 <span class="s2">WHERE </span><span class="s1">NoteID = @NoteID;</span>
+    <span class="s2">PRINT </span><span class="s3">'Заметка успешно изменена'</span><span class="s1">;</span>
+<span class="s2">END</span><span class="s1">;</span>
+<span class="s2">GO</span>
+
+<span class="s0">--Создаю процедуру полученя заметки по ID--</span>
+<span class="s2">IF </span><span class="s1">OBJECT_ID(</span><span class="s3">'GetNote'</span><span class="s1">, </span><span class="s3">'P'</span><span class="s1">) </span><span class="s2">IS NOT NULL</span>
+    <span class="s2">DROP PROCEDURE </span><span class="s1">GetNote;</span>
+<span class="s2">GO</span>
+<span class="s2">CREATE PROCEDURE </span><span class="s1">GetNote</span>
+<span class="s1">@NoteID </span><span class="s2">INT</span>
+<span class="s2">AS</span>
+<span class="s2">BEGIN</span>
+    <span class="s2">SELECT </span><span class="s1">NoteID, NoteTitle, NoteText, CreatingDate </span><span class="s2">From </span><span class="s1">Notes</span>
+    <span class="s2">WHERE </span><span class="s1">NoteID = @NoteID;</span>
+<span class="s2">END</span><span class="s1">;</span>
+<span class="s2">GO</span>
+
+<span class="s0">--Процедура удаления заметки по ID--</span>
+<span class="s2">IF </span><span class="s1">OBJECT_ID(</span><span class="s3">'DeleteNote'</span><span class="s1">, </span><span class="s3">'P'</span><span class="s1">) </span><span class="s2">IS NOT NULL</span>
+    <span class="s2">DROP PROCEDURE </span><span class="s1">DeleteNote;</span>
+<span class="s2">GO</span>
+<span class="s2">CREATE PROCEDURE </span><span class="s1">DeleteNote</span>
+<span class="s1">@NoteID </span><span class="s2">INT</span>
+<span class="s2">AS</span>
+<span class="s2">BEGIN</span>
+    <span class="s2">DECLARE </span><span class="s1">@DeletedNoteTitle </span><span class="s2">NVARCHAR</span><span class="s1">(</span><span class="s2">MAX</span><span class="s1">)</span>
+    <span class="s2">SELECT </span><span class="s1">NoteTitle = @DeletedNoteTitle </span><span class="s2">FROM </span><span class="s1">Notes </span><span class="s2">WHERE </span><span class="s1">NoteID = @NoteID;</span>
+
+    <span class="s2">DELETE FROM </span><span class="s1">Notes</span>
+    <span class="s2">WHERE </span><span class="s1">NoteID = @NoteID;</span>
+
+    <span class="s2">IF </span><span class="s1">@@ROWCOUNT &gt; </span><span class="s4">0</span>
+    <span class="s2">BEGIN</span>
+        <span class="s2">PRINT </span><span class="s3">'Заметка ' </span><span class="s1">+ @DeletedNoteTitle + </span><span class="s3">'удалена'</span>
+    <span class="s2">end</span>
+    <span class="s2">ELSE</span>
+    <span class="s2">BEGIN</span>
+        <span class="s2">PRINT </span><span class="s3">'Заметка с таким ID не найдена, проверьте ID заметки, которую хотите удалить'</span>
+    <span class="s2">end</span>
+<span class="s2">END</span><span class="s1">;</span>
+<span class="s2">GO</span>
+
+<span class="s0">--INFO--</span>
+<span class="s2">IF </span><span class="s1">OBJECT_ID(</span><span class="s3">'Info'</span><span class="s1">, </span><span class="s3">'P'</span><span class="s1">) </span><span class="s2">IS NOT NULL</span>
+<span class="s2">DROP PROCEDURE </span><span class="s1">Info;</span>
+<span class="s2">GO</span>
+<span class="s2">CREATE PROCEDURE </span><span class="s1">Info</span>
+<span class="s2">AS</span>
+<span class="s2">BEGIN</span>
+    <span class="s2">PRINT </span><span class="s3">'Чтобы посмотреть все заметки введите команду: EXEC GetNotes' </span><span class="s1">+</span>
+          <span class="s2">CHAR</span><span class="s1">(</span><span class="s4">10</span><span class="s1">) +</span><span class="s3">'Чтобы создать новую заметку введите команду EXEC AddNote и введите текст заголовка и текст заметки в одиночных кавычках' </span><span class="s1">+</span>
+        <span class="s3">'СHAR(10) Чтобы просмотреть заметку введите команду EXEC GetNote и номер ID вашей заметки' </span><span class="s1">+</span>
+          <span class="s2">CHAR</span><span class="s1">(</span><span class="s4">10</span><span class="s1">) + </span><span class="s3">'Чтобы удалить заметку введите команду EXEC DeleteNote и номер ID заметки'</span><span class="s1">;</span>
+
+<span class="s2">END</span><span class="s1">;</span>
+<span class="s2">GO</span>
+
+</pre>
+</body>
+</html>
